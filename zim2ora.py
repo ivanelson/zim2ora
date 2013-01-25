@@ -23,50 +23,62 @@ def validFields(inFile, tableName, table_columns):
                pos = value[0]
                if table_columns[pos][4] == 'N' and \
                      value[1] in (None,'',' '):        # Not NUllAble 
-                         if table_columns[pos][3] in ('DATE''VARCHAR2'):
-                                     row[pos] = ' '
+                         if table_columns[pos][3] == 'VARCHAR2':
+                             row[pos] = ' '
+                         elif table_columns[pos][3] == 'DATE':
+                                     row[pos] = None 
                          elif table_columns[pos][3] == 'NUMBER': 
                                      row[pos] = 0
                elif table_columns[pos][3] == 'NUMBER' and \
                        value[1] in (None, '',' '):
-                           del columns[pos]
-                           del row[pos]
+                           #del columns[pos]
+                           #del row[pos]
+                           row[pos] = 0
                elif table_columns[pos][3] == 'NUMBER' and \
                        table_columns[pos][2] > 0 and      \
                        value[1] not in ('',' ',None):
-                           print 'POS: ',value[0]
-                           print 'VALUE: ',value[1]
-                           print 'FIELD: ',columns[pos]
+                           #print 'POS: ',value[0]
+                           #print 'VALUE: ',value[1]
+                           #print 'FIELD: ',columns[pos]
                            row[pos] = float(row[pos])
                elif table_columns[pos][3] == 'DATE' and \
-                       value[1] not in (None, 0, '0','',' '):
+                       value[1] not in (None, 0, '0','',' '): # Invalid date
                    try:
                        datetime(value[1])
                    except TypeError:
                        #row[pos] = 'null'
                        #print 'Opa! INVALID DATE, no Field %s Type is DATE: %s' \
                        #     % (table_columns[pos][0],  value[1])
-                       del columns[pos]
-                       del row[pos]
+                       #del columns[pos]
+                       #del row[pos]
+                       row[pos] = None
 
                elif table_columns[pos][3] == 'DATE' and \
                      value[1] in (None,0,'0','',' '):
                          #row[pos] = 'null'
                          #print 'Opa!DATE is NULL, no Field %s Type is DATE: %s'\
                          # % (table_columns[pos][0],  value[1])
-                         del columns[pos]
-                         del row[pos]
+                         #del columns[pos]
+                         #del row[pos]
+                         row[pos] = None
            L.append(tuple(row))
     #sSQL = 'INSERT INTO {0}_TEMP ({1}) VALUES (:{2}) '.format(tableName, \
     #         ','.join(col for col in columns), \
     #         ','.join(str(col+1) for col in range(len(columns))))
     #
-    print L
+    #print L
+    #sSQL = ('INSERT INTO {0}_TEMP (%s) VALUES (%s)'.format(tableName) %
+    #       (','.join('%s' % name for name in columns),
+    #       ','.join(':{0}'.format(conta + 1) for conta in range(len(columns)))))
     sSQL = ('INSERT INTO {0}_TEMP (%s) VALUES (%s)'.format(tableName) %
-           (','.join('%s' % name for name in columns),
-           ','.join(':{0}'.format(conta + 1) for conta in range(len(columns)))))
+           (','.join('%s' % name[0] for name in table_columns),
+             ','.join(
+                       "NVL(:{0},null)".format(i + 1) \
+                       if str(value[3])=='DATE' else \
+                          ':{0}'.format(i + 1)  \
+                       for i, value in enumerate(list(table_columns)) )))
+    print sSQL
     return (sSQL, L)
-
 
 """
 reader = csv.reader(open(infile), delimiter=';', quotechar='"')
