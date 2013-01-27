@@ -21,7 +21,7 @@ def validFields(inFile, tableName, table_columns):
            for value in enumerate(list(row)):
                pos = value[0]
                if table_columns[pos][4] == 'N' and \
-                     value[1] in (None,'',' '):        # Not NUllAble 
+                     value[1] in (None,'',' '):        # Not NUllable 
                          if table_columns[pos][3] == 'VARCHAR2':
                              row[pos] = ' '
                          elif table_columns[pos][3] == 'DATE':
@@ -30,35 +30,20 @@ def validFields(inFile, tableName, table_columns):
                                      row[pos] = Decimal(0)
                elif table_columns[pos][3] == 'NUMBER' and \
                        value[1] in (None, '',' '):
-                           #del columns[pos]
-                           #del row[pos]
                            row[pos] = Decimal(0)
                elif table_columns[pos][3] == 'NUMBER' and \
                        table_columns[pos][2] > 0 and      \
                        value[1] not in ('',' ',None):
-                           #print 'POS: ',value[0]
-                           #print 'VALUE: ',value[1]
-                           #print 'FIELD: ',columns[pos]
                            row[pos] = Decimal(row[pos])
                elif table_columns[pos][3] == 'DATE' and \
                        value[1] not in (None, 0, '0','',' '): # Invalid date
                    try:
                        datetime(value[1])
                    except TypeError:
-                       #row[pos] = 'null'
-                       #print 'Opa! INVALID DATE, no Field %s Type is DATE: %s' \
-                       #     % (table_columns[pos][0],  value[1])
-                       #del columns[pos]
-                       #del row[pos]
                        row[pos] = None
 
                elif table_columns[pos][3] == 'DATE' and \
                      value[1] in (None,0,'0','',' '):
-                         #row[pos] = 'null'
-                         #print 'Opa!DATE is NULL, no Field %s Type is DATE: %s'\
-                         # % (table_columns[pos][0],  value[1])
-                         #del columns[pos]
-                         #del row[pos]
                          row[pos] = None
            L.append(tuple(row))
 
@@ -132,19 +117,6 @@ if __name__ == '__main__':
         cursor.execute(vSQL)
         print '%s_TEMP TEMPORARY TABLE HAS BEEN CREATED.' % vTable
 
-                          # Check Table if exists  
-    #vSQL='''SELECT  TABLE_NAME FROM USER_TABLES
-    #                       WHERE TABLE_NAME = '{0}_TEMP'
-    #     '''.format(vTable)
-    #cursor.execute(vSQL)
-    #if bool(cursor.fetchone()):
-    #    pass
-    #else:
-    #    vSQL='''CREATE GLOBAL TEMPORARY TABLE {0}_TEMP AS
-    #           (SELECT * FROM {1} WHERE 1=2)
-    #         '''.format(vTable, vTable)
-    #    cursor.execute(vSQL)
-
     vKey=None          # Primary Key
     vSQL = '''SELECT cols.column_name
                  FROM all_constraints cons, all_cons_columns cols
@@ -171,11 +143,9 @@ if __name__ == '__main__':
 
     (sql_insert, L) = validFields(infile, vTable, table_columns)
 
-    cursor.bindarraysize = 1
     cursor.executemanyprepared(sql_insert)
     cursor.executemany(sql_insert, L)
     cursor.execute(vSQL)              # Merge
     db.commit()
     cursor.close()
     db.close()
-
