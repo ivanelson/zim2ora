@@ -61,6 +61,7 @@ def validFields(inFile, tableName, table_columns, cursor):
     with open(inFile, 'rb') as f:
        reader = csv.reader(f, delimiter=';', quotechar='"')
        for row in reader:
+           print len(row)
            for value in enumerate(list(row)):
                pos = value[0]
                if table_columns[pos][4] == 'N' and \

@@ -2,15 +2,34 @@
 #-*- encoding: utf-8 -*-
 # Exporta Dados de Arquivos CSV Para o Oracle
 # * Campos de Data Devem ser validados antes de ser importados.
-
+#
 import cx_Oracle as dbatez
 import sys, csv
 from decimal import Decimal
 from datetime import datetime
+from time import mktime, strptime
+
+def isDate(inDate):
+    date = inDate.split(' ')[0]
+    result = None
+
+    for format in ['%Y%m%d', '%Y%m%d.%H']:
+        try:
+            result = datetime.strptime(date, format)
+        except:
+            pass
+    if result is None:
+       print 'Malformed date.'
+       return None
+    else:
+        print 'Date is fine.'
+    print date
+    return date
 
 def validFields(inFile, tableName, table_columns):
     """
-    table_columns -> [('NR_CRM', None, None, 'VARCHAR2','Y'),('ID',None, None,'VARCHAR2','Y')]
+    table_columns -> 
+    [('NR_CRM', None, None, 'VARCHAR2','Y'),('ID',None, None,'VARCHAR2','Y')]
     """
 
     L = []
@@ -20,38 +39,31 @@ def validFields(inFile, tableName, table_columns):
        for row in reader:
            for value in enumerate(list(row)):
                pos = value[0]
+               if table_columns[pos][3] == 'NUMBER' and \
+                       table_columns[pos][4] == 'Y':
+                           print table_columns[pos][0], '-> ', value[1]
                if table_columns[pos][4] == 'N' and \
-                     value[1] in (None,'',' '):        # Not NUllable 
+                     (value[1] in (None,'',' ') or \
+                      value[1].strip() in (None, '',' ')):  # Not Nullable 
                          if table_columns[pos][3] == 'VARCHAR2':
-                             row[pos] = ' '
+                             row[pos] = 'X'
                          elif table_columns[pos][3] == 'DATE':
                                      row[pos] = None
+                         elif table_columns[pos][3] == 'NUMBER' and \
+                                 table_columns[pos][2] > 0:
+                                     row[pos] = Decimal(0.00) 
                          elif table_columns[pos][3] == 'NUMBER':
-                                     row[pos] = Decimal(0)
-               elif table_columns[pos][3] == 'NUMBER' and \
-                       value[1] in (None, '',' '):
-                           row[pos] = Decimal(0)
-               elif table_columns[pos][3] == 'NUMBER' and \
-                       table_columns[pos][2] > 0 and      \
-                       value[1] not in ('',' ',None):
-                           row[pos] = Decimal(row[pos])
+                                     row[pos] = 0
                elif table_columns[pos][3] == 'DATE' and \
                        value[1] not in (None, 0, '0','',' '): # Invalid date
-                   try:
-                       datetime(value[1])
-                   except TypeError:
-                       row[pos] = None
-
-               elif table_columns[pos][3] == 'DATE' and \
-                     value[1] in (None,0,'0','',' '):
-                         row[pos] = None
+                       row[pos] = '20130101' #isDate(value[1])
            L.append(tuple(row))
 
     sSQL = ('INSERT INTO {0}_TEMP (%s) VALUES (%s)'.format(tableName) %
            (','.join('%s' % name[0] for name in table_columns),
              ','.join(
                        "NVL(:{0},null)".format(i + 1) \
-                       if str(value[3])=='DATE' else \
+                       if str(value[3]) in ('NUMBER','DATE') else \
                           ':{0}'.format(i + 1)  \
                        for i, value in enumerate(list(table_columns)) )))
     return (sSQL, L)
@@ -143,7 +155,7 @@ if __name__ == '__main__':
 
     (sql_insert, L) = validFields(infile, vTable, table_columns)
 
-    cursor.executemanyprepared(sql_insert)
+    cursor.prepare(sql_insert)
     cursor.executemany(sql_insert, L)
     cursor.execute(vSQL)              # Merge
     db.commit()
