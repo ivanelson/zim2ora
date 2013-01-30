@@ -56,7 +56,15 @@ def validFields(inFile, tableName, table_columns):
                                      row[pos] = 0
                elif table_columns[pos][3] == 'DATE' and \
                        value[1] not in (None, 0, '0','',' '): # Invalid date
-                       row[pos] = '20130101' #isDate(value[1])
+                       row[pos] = isDate(value[1])
+               elif table_columns[pos][3] == 'NUMBER' and \
+                        table_columns[pos][2] == 0:          # Without Decimals
+                            if not isinstance(eval(value[1]), int):
+                                row[pos] = 0
+               elif table_columns[pos][3] == 'NUMBER' and \
+                        table_columns[pos][2] > 0:           # With Decimals
+                            if not isinstance(eval(value[1]), float):
+                                row[pos] = Decimal(0.00)
            L.append(tuple(row))
 
     sSQL = ('INSERT INTO {0}_TEMP (%s) VALUES (%s)'.format(tableName) %
