@@ -39,16 +39,13 @@ def validFields(inFile, tableName, table_columns):
        for row in reader:
            for value in enumerate(list(row)):
                pos = value[0]
-               if table_columns[pos][3] == 'NUMBER' and \
-                       table_columns[pos][4] == 'Y':
-                           print table_columns[pos][0], '-> ', value[1]
                if table_columns[pos][4] == 'N' and \
                      (value[1] in (None,'',' ') or \
                       value[1].strip() in (None, '',' ')):  # Not Nullable 
                          if table_columns[pos][3] == 'VARCHAR2':
-                             row[pos] = 'X'
+                             row[pos] = ' '
                          elif table_columns[pos][3] == 'DATE':
-                                     row[pos] = None
+                                     row[pos] = None #'20130201' #None
                          elif table_columns[pos][3] == 'NUMBER' and \
                                  table_columns[pos][2] > 0:
                                      row[pos] = Decimal(0.00) 
@@ -56,17 +53,20 @@ def validFields(inFile, tableName, table_columns):
                                      row[pos] = 0
                elif table_columns[pos][3] == 'DATE' and \
                        value[1] not in (None, 0, '0','',' '): # Invalid date
-                       row[pos] = isDate(value[1])
+                       row[pos] = '20130101' #isDate(value[1])
+               elif table_columns[pos][3] == 'DATE' and \
+                       value[1] in (None, 0, '0','',' ','       '): # Invalid date
+                       row[pos] = None #'20130101' #isDate(value[1])
                elif table_columns[pos][3] == 'NUMBER' and \
                         table_columns[pos][2] == 0:          # Without Decimals
-                            print value[1], "< WITHOUT >", row[pos]
+                            #print value[1], "< WITHOUT >", row[pos]
                             try:
                                 row[pos] = int(value[1])
                             except ValueError:
                                 row[pos] = 0
                elif table_columns[pos][3] == 'NUMBER' and \
                         table_columns[pos][2] > 0:           # With Decimals
-                            print value[1], "< WITH >", row[pos]
+                            #print value[1], "< WITH >", row[pos]
                             try:
                                 row[pos] = Decimal(value[1])
                             except ValueError:
