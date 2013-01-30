@@ -50,9 +50,11 @@ def validFields(inFile):
     with open(inFile, 'rb') as f:
        reader = csv.reader(f, delimiter=';', quotechar='"')
        for row in reader:
-           print row,"@",type(row)
            for value in enumerate(list(row)):
                pos = value[0]
+               print value[1]
+               if isinstance(eval(str(value[1])), int):
+                   print 'Eh inteiro....'
                print row[pos],"@",type(row[pos])
 
 def mergeTable(tableName, pKey, table_columns):

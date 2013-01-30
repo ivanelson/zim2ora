@@ -59,11 +59,17 @@ def validFields(inFile, tableName, table_columns):
                        row[pos] = isDate(value[1])
                elif table_columns[pos][3] == 'NUMBER' and \
                         table_columns[pos][2] == 0:          # Without Decimals
-                            if not isinstance(eval(value[1]), int):
+                            print value[1], "< WITHOUT >", row[pos]
+                            try:
+                                row[pos] = int(value[1])
+                            except ValueError:
                                 row[pos] = 0
                elif table_columns[pos][3] == 'NUMBER' and \
                         table_columns[pos][2] > 0:           # With Decimals
-                            if not isinstance(eval(value[1]), float):
+                            print value[1], "< WITH >", row[pos]
+                            try:
+                                row[pos] = Decimal(value[1])
+                            except ValueError:
                                 row[pos] = Decimal(0.00)
            L.append(tuple(row))
 
