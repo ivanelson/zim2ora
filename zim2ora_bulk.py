@@ -1,8 +1,14 @@
 #!/usr/bin/env python
 #-*- encoding: utf-8 -*-
+#
 # Exporta Dados de Arquivos CSV Para o Oracle
 # * Campos de Data Devem ser validados antes de ser importados.
+# * Datas invalidas serao substituidas por null, ex: 30.fev.2013
+# * O csv deve estah colunado na mesma ordem das colunas no Oracle
+# * Esse modulo pode ser facilmente portado para qualquer banco like SQL
 #
+# BY Ivan - JAN/2013 / ivanelsonnunes@gmail.com
+
 import cx_Oracle as dbatez
 import sys, csv
 from decimal import Decimal
@@ -53,11 +59,11 @@ def isDate(inDate):
         except:
             pass
     if result is None:
-       print 'Malformed date.'
+       print 'Invalid date.'
        return None
     else:
-        print 'Date is fine.'
-    print date
+        pass #print 'Date is fine.'
+    #print date
     return date
 
 def validFields(inFile, tableName, table_columns):
@@ -79,7 +85,7 @@ def validFields(inFile, tableName, table_columns):
                          if table_columns[pos][3] == 'VARCHAR2':
                              row[pos] = ' '
                          elif table_columns[pos][3] == 'DATE':
-                                     row[pos] = None #'20130201' #None
+                                     row[pos] = None 
                          elif table_columns[pos][3] == 'NUMBER' and \
                                  table_columns[pos][2] > 0:
                                      row[pos] = Decimal(0.00) 
@@ -87,20 +93,18 @@ def validFields(inFile, tableName, table_columns):
                                      row[pos] = 0
                elif table_columns[pos][3] == 'DATE' and \
                        value[1] not in (None, 0, '0','',' '): # Invalid date
-                       row[pos] = '20130101' #isDate(value[1])
+                       row[pos] = isDate(value[1])
                elif table_columns[pos][3] == 'DATE' and \
                        value[1] in (None, 0, '0','',' ','       '): # Invalid date
-                       row[pos] = None #'20130101' #isDate(value[1])
+                       row[pos] = None 
                elif table_columns[pos][3] == 'NUMBER' and \
                         table_columns[pos][2] == 0:          # Without Decimals
-                            #print value[1], "< WITHOUT >", row[pos]
                             try:
                                 row[pos] = int(value[1])
                             except ValueError:
                                 row[pos] = 0
                elif table_columns[pos][3] == 'NUMBER' and \
                         table_columns[pos][2] > 0:           # With Decimals
-                            #print value[1], "< WITH >", row[pos]
                             try:
                                 row[pos] = Decimal(value[1])
                             except ValueError:
@@ -166,46 +170,9 @@ if __name__ == '__main__':
     db = dbatez.connect("{}/{}@{}/orcl".format(user, password, host))
     cursor = db.cursor()
 
-    """
-                          # Check Table if exists  
-    vSQL='''SELECT  TABLE_NAME FROM USER_TABLES
-                           WHERE TABLE_NAME = '{0}_TEMP'
-         '''.format(vTable)
-    cursor.execute(vSQL)
-    if not cursor.fetchone():
-        vSQL='''CREATE GLOBAL TEMPORARY TABLE {0}_TEMP AS
-               (SELECT * FROM {1} WHERE 1=2)
-             '''.format(vTable, vTable)
-        cursor.execute(vSQL)
-        print '%s_TEMP TEMPORARY TABLE HAS BEEN CREATED.' % vTable
-    """
     create_tabletemp(cursor, vTable) 
 
-    """
-    vKey=None          # Primary Key
-    vSQL = '''SELECT cols.column_name
-                 FROM all_constraints cons, all_cons_columns cols
-                 WHERE cols.table_name = '{0}'
-                 AND cons.constraint_type = 'P'
-                 AND cons.constraint_name = cols.constraint_name
-                 AND cols.owner='DBATEZ'
-                 AND cons.owner = cols.owner
-            '''.format(vTable)
-
-    cursor.execute(vSQL)
-    vKey = cursor.fetchone()[0]
-    """
     (vKey, table_columns) = read_columns(cursor, vTable)
-
-    """
-    vSQL = '''
-       SELECT COLUMN_NAME, DATA_PRECISION, DATA_SCALE, DATA_TYPE, NULLABLE
-              FROM USER_TAB_COLUMNS
-              WHERE TABLE_NAME='{0}' ORDER BY COLUMN_ID 
-           '''.format(vTable)
-    cursor.execute(vSQL)
-    table_columns = cursor.fetchall()
-    """
 
     vSQL = mergeTable(vTable, vKey, table_columns)
 
