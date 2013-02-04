@@ -9,6 +9,40 @@ from decimal import Decimal
 from datetime import datetime
 from time import mktime, strptime
 
+def read_columns(cursor, tablename):
+    vSQL = '''SELECT cols.column_name
+                 FROM all_constraints cons, all_cons_columns cols
+                 WHERE cols.table_name = '{0}'
+                 AND cons.constraint_type = 'P'
+                 AND cons.constraint_name = cols.constraint_name
+                 AND cols.owner='DBATEZ'
+                 AND cons.owner = cols.owner
+            '''.format(tablename)
+    cursor.execute(vSQL)
+    pKey = cursor.fetchone()[0]
+
+    vSQL = '''
+       SELECT COLUMN_NAME, DATA_PRECISION, DATA_SCALE, DATA_TYPE, NULLABLE
+              FROM USER_TAB_COLUMNS
+              WHERE TABLE_NAME='{0}' ORDER BY COLUMN_ID 
+           '''.format(tablename)
+    cursor.execute(vSQL)     # Retrieve columns
+    columns = cursor.fetchall()
+    return (pKey, columns) 
+
+def create_tabletemp(cursor, tablename):
+                          # Check Table if exists  
+    vSQL='''SELECT  TABLE_NAME FROM USER_TABLES
+                           WHERE TABLE_NAME = '{0}_TEMP'
+         '''.format(tablename)
+    cursor.execute(vSQL)
+    if not cursor.fetchone():
+        vSQL='''CREATE GLOBAL TEMPORARY TABLE {0}_TEMP AS
+               (SELECT * FROM {1} WHERE 1=2)
+             '''.format(tablename, tablename)
+        cursor.execute(vSQL)
+        print '%s_TEMP TEMPORARY TABLE HAS BEEN CREATED.' % tablename
+
 def isDate(inDate):
     date = inDate.split(' ')[0]
     result = None
@@ -131,6 +165,8 @@ if __name__ == '__main__':
     host     = sys.argv[5]
     db = dbatez.connect("{}/{}@{}/orcl".format(user, password, host))
     cursor = db.cursor()
+
+    """
                           # Check Table if exists  
     vSQL='''SELECT  TABLE_NAME FROM USER_TABLES
                            WHERE TABLE_NAME = '{0}_TEMP'
@@ -142,7 +178,10 @@ if __name__ == '__main__':
              '''.format(vTable, vTable)
         cursor.execute(vSQL)
         print '%s_TEMP TEMPORARY TABLE HAS BEEN CREATED.' % vTable
+    """
+    create_tabletemp(cursor, vTable) 
 
+    """
     vKey=None          # Primary Key
     vSQL = '''SELECT cols.column_name
                  FROM all_constraints cons, all_cons_columns cols
@@ -155,8 +194,10 @@ if __name__ == '__main__':
 
     cursor.execute(vSQL)
     vKey = cursor.fetchone()[0]
+    """
+    (vKey, table_columns) = read_columns(cursor, vTable)
 
-
+    """
     vSQL = '''
        SELECT COLUMN_NAME, DATA_PRECISION, DATA_SCALE, DATA_TYPE, NULLABLE
               FROM USER_TAB_COLUMNS
@@ -164,6 +205,7 @@ if __name__ == '__main__':
            '''.format(vTable)
     cursor.execute(vSQL)
     table_columns = cursor.fetchall()
+    """
 
     vSQL = mergeTable(vTable, vKey, table_columns)
 
