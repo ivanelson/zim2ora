@@ -17,10 +17,10 @@ from time import mktime, strptime
 import getpass
 import telnetlib
 
-def telnet(hostname, user, pass):
+def telnet(hostname, user, password):
     tn = telnetlib.Telnet(hostname)
     tn.write(user + "\n")
-    tn.write(pass + "\n")
+    tn.write(password + "\n")
     tn.write("exit\n")
     print tn.read_all()
 
