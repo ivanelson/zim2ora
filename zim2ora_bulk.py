@@ -14,6 +14,15 @@ import sys, csv
 from decimal import Decimal
 from datetime import datetime
 from time import mktime, strptime
+import getpass
+import telnetlib
+
+def telnet(hostname, user, pass):
+    tn = telnetlib.Telnet(hostname)
+    tn.write(user + "\n")
+    tn.write(pass + "\n")
+    tn.write("exit\n")
+    print tn.read_all()
 
 def read_columns(cursor, tablename):
     vSQL = '''SELECT cols.column_name
