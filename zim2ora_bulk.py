@@ -84,7 +84,7 @@ def validFields(inFile, tableName, table_columns):
     L = []
     columns = [ col[0] for col in table_columns ]
     with open(inFile, 'rb') as f:
-       reader = csv.reader(f, delimiter=';', quotechar='"')
+       reader = csv.reader(f, delimiter=';', quotechar='|')
        for row in reader:
            for value in enumerate(list(row)):
                pos = value[0]

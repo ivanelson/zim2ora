@@ -59,7 +59,7 @@ def validFields(inFile, tableName, table_columns, cursor):
                        for i, value in enumerate(list(table_columns)) )))
 
     with open(inFile, 'rb') as f:
-       reader = csv.reader(f, delimiter=';', quotechar='"')
+       reader = csv.reader(f, delimiter=';', quotechar='|')
        for row in reader:
            print len(row)
            for value in enumerate(list(row)):
