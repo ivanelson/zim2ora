@@ -80,7 +80,6 @@ def validFields(inFile, tableName, table_columns):
     table_columns -> 
     [('NR_CRM', None, None, 'VARCHAR2','Y'),('ID',None, None,'VARCHAR2','Y')]
     """
-
     L = []
     columns = [ col[0] for col in table_columns ]
     with open(inFile, 'rb') as f:
@@ -184,8 +183,10 @@ if __name__ == '__main__':
     (vKey, table_columns) = read_columns(cursor, vTable)
 
     vSQL = mergeTable(vTable, vKey, table_columns)
+    print vSQL
 
     (sql_insert, L) = validFields(infile, vTable, table_columns)
+    print sql_insert
 
     cursor.prepare(sql_insert)
     cursor.executemany(sql_insert, L)

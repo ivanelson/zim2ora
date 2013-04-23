@@ -7,6 +7,22 @@ import sys, csv
 from decimal import Decimal
 from datetime import datetime
 
+def csv_columnames():
+    data = csv.reader(open('entgara.csv'), delimiter=';')
+    #Read the column names from the first line of the file
+    fields = data.next()
+    for row in data:
+        # Zip together the field names and values
+        items = zip(fields, row)
+        item = {}
+        print items
+        # Add the value to our dictionary
+        for (name, value) in items:
+            item[name] = value.strip()
+            print 'Coluna: ',name
+            print 'Valor: ', value
+            print item
+
 def read_columns(cursor, tablename):
     vSQL = '''SELECT cols.column_name
                  FROM all_constraints cons, all_cons_columns cols
@@ -98,5 +114,8 @@ def mergeTable(tableName, pKey, table_columns):
     return vSQL
 
 if __name__ == '__main__':
-    infile   = sys.argv[1]  # Input file CSV
-    validFields(infile)
+    if sys.argv[1] == 'csv':
+        csv_columnames()
+    else:
+         infile   = sys.argv[1]  # Input file CSV
+         validFields(infile)
